@@ -41,7 +41,7 @@ WORKSPACE_ID = os.environ.get("LAW_WORKSPACE_ID", "50ea7a52-c6ef-4f2b-b04c-6896a
 BATCH_ACCOUNT = os.environ.get("BATCH_ACCOUNT", "batchgrafus389488")
 BATCH_REGION = os.environ.get("BATCH_REGION", "westus2")
 BATCH_URL = f"https://{BATCH_ACCOUNT}.{BATCH_REGION}.batch.azure.com"
-BATCH_API = "2024-07-01.20.0"
+BATCH_API = "2025-06-01"
 LOG_TYPE = "BatchNodeInventory"
 
 
