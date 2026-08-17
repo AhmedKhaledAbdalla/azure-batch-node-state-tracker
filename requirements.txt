@@ -1,0 +1,2 @@
+# The collector only uses the Python standard library plus the Azure CLI (az).
+# No pip dependencies are needed.
