@@ -50,6 +50,14 @@ def key_from_temp() -> str:
         return os.environ["LAW_SHARED_KEY"]
     with open(os.path.join(os.environ["TEMP"], ".law-key"), "r", encoding="utf-8") as f:
         return f.read().strip()
+"""
+    Retrieves the Log Analytics Workspace shared key.
+    Checks the 'LAW_SHARED_KEY' environment variable first,
+    falling back to a local temporary file if not set.
+    
+    Returns:
+        str: The Log Analytics Workspace shared key.
+"""
 
 
 def aad_token(resource: str) -> str:
@@ -58,6 +66,15 @@ def aad_token(resource: str) -> str:
         capture_output=True, text=True, check=True, shell=True,
     )
     return json.loads(out.stdout)["accessToken"]
+"""
+    Obtains an Azure Active Directory (Entra ID) access token using Azure CLI.
+    
+    Args:
+        resource (str): The target Azure resource URL (e.g., Batch endpoint).
+        
+    Returns:
+        str: The JWT access token for authentication.
+"""
 
 
 def batch_get(path: str, token: str) -> list[dict]:
@@ -70,12 +87,35 @@ def batch_get(path: str, token: str) -> list[dict]:
         items.extend(body.get("value", []))
         url = body.get("odata.nextLink") or body.get("nextLink")
     return items
-
+"""
+    Sends a GET request to the Azure Batch REST API and handles pagination.
+    Loops through 'nextLink' if the results span multiple pages.
+    
+    Args:
+        path (str): The API endpoint path (e.g., '/pools').
+        token (str): The Bearer access token for authorization.
+        
+    Returns:
+        list[dict]: A complete list of JSON objects returned by the API.
+"""
 
 def law_sign(cid: str, key: str, date: str, length: int) -> str:
     to_hash = f"POST\n{length}\napplication/json\nx-ms-date:{date}\n/api/logs"
     hashed = hmac.new(base64.b64decode(key), to_hash.encode("utf-8"), hashlib.sha256).digest()
     return f"SharedKey {cid}:{base64.b64encode(hashed).decode()}"
+"""
+    Generates the HMAC-SHA256 authorization signature required by the 
+    Log Analytics HTTP Data Collector API.
+    
+    Args:
+        cid (str): The Log Analytics Workspace ID.
+        key (str): The Workspace shared key.
+        date (str): The current date in RFC 1123 format.
+        length (int): The byte length of the request body.
+        
+    Returns:
+        str: The formatted 'SharedKey' authorization string.
+"""
 
 
 def post_to_law(rows: list[dict]) -> None:
@@ -95,6 +135,16 @@ def post_to_law(rows: list[dict]) -> None:
     with urllib.request.urlopen(req, timeout=60) as r:
         if r.status >= 300:
             raise RuntimeError(f"LAW ingest failed: {r.status} {r.read()!r}")
+"""
+    Formats the collected node data as JSON and securely sends it 
+    to the Azure Log Analytics Workspace via a POST request.
+    
+    Args:
+        rows (list[dict]): A list of dictionaries representing node state snapshots.
+        
+    Raises:
+        RuntimeError: If the Log Analytics API returns an HTTP error status (>= 300).
+"""
 
 
 def snapshot() -> tuple[int, int]:
@@ -137,7 +187,15 @@ def snapshot() -> tuple[int, int]:
             })
     post_to_law(rows)
     return len(pools), len(rows)
-
+"""
+    The core orchestration function. 
+    Iterates through all Azure Batch pools and their respective nodes, 
+    extracts granular state and error information not exposed by default metrics, 
+    and ships the formatted data to Log Analytics.
+    
+    Returns:
+        tuple[int, int]: A tuple containing (number_of_pools_processed, number_of_nodes_processed).
+"""
 
 def main() -> None:
     ap = argparse.ArgumentParser()
