@@ -6,9 +6,7 @@ A small Python script that polls the Azure Batch REST API for per-node state and
 
 The `Microsoft.Batch/batchAccounts` metric namespace publishes counts like `LeavingPoolNodeCount`, `UnusableNodeCount`, `StartTaskFailedNodeCount`, `RunningNodeCount`, and `IdleNodeCount`. Each one is an account-wide integer. There is no `nodeId` dimension and no `poolId` dimension. If three nodes are stuck in `leavingpool`, the metric tells you the count. It cannot tell you the node ID, the pool ID, when the state started, or the error code.
 
-`AzureDiagnostics` ServiceLog does not fill the gap. It emits pool-level events such as `PoolResizeCompleteEvent` and `PoolAutoScaleEvent`, and task events. It does not emit a per-node state change record on the current schema.
-
-The Batch REST API does return everything per node: `state`, `stateTransitionTime`, `errors[]`, `ipAddress`, `allocationTime`, `lastBootTime`, `startTaskInfo`. This script calls `GET /pools/{poolId}/nodes` on a schedule and lands each row in Log Analytics so it can be queried, alerted on, and joined with other tables.
+See the Full Tech community Article from here:
 
 ## How it works
 
@@ -119,20 +117,6 @@ Per node, per snapshot:
 - `AllocationTime`, `LastBootTime`
 - `StartTaskState`, `StartTaskExitCode`, `StartTaskResult`
 - `ErrorCount`, `ErrorCode`, `ErrorMessage` (first error only, message truncated to 500 characters)
-
-## Running it in production
-
-Common hosts:
-
-- Azure Function on a Timer trigger. Managed Identity, shared key in Key Vault (or move to the DCR ingestion API and remove the key), cron like `0 */1 * * * *`.
-- Container App Job on a schedule trigger. Use this when the collector must sit inside a VNet to reach a Batch account with a private endpoint, or when you want to ship a custom base image.
-- A cron job or Scheduled Task on an existing ops VM. Zero new Azure resources.
-
-For any of them, swap the CLI token call for a Managed Identity token, and move the LAW shared key out of `%TEMP%\.law-key`.
-
-## What this does not do
-
-This project is a monitoring layer. It observes state over time; it does not remediate. If a node is stuck because of a capacity constraint, a platform incident, or a bad image, the collector surfaces the node ID, the pool, the transition time, and the error code so on-call can act. The remediation runbook (resize the pool to 0 and back, reboot the node, reimage it, open a support ticket) still belongs to you.
 
 ## Notes
 
