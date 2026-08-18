@@ -6,7 +6,7 @@ A small Python script that polls the Azure Batch REST API for per-node state and
 
 The `Microsoft.Batch/batchAccounts` metric namespace publishes counts like `LeavingPoolNodeCount`, `UnusableNodeCount`, `StartTaskFailedNodeCount`, `RunningNodeCount`, and `IdleNodeCount`. Each one is an account-wide integer. There is no `nodeId` dimension and no `poolId` dimension. If three nodes are stuck in `leavingpool`, the metric tells you the count. It cannot tell you the node ID, the pool ID, when the state started, or the error code.
 
-See the Full Tech community Article from here: https://techcommunity.microsoft.com/blog/AzurePaaSBlog/tracking-batch-node-state-and-duration-in-log-analytics/4547582
+See the Full Tech community Article from here: [Tracking Batch node state and duration in Log Analytics]([url](https://techcommunity.microsoft.com/blog/AzurePaaSBlog/tracking-batch-node-state-and-duration-in-log-analytics/4547582))
 
 ## How it works
 
